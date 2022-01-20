@@ -52,11 +52,11 @@ kp_team_history <- function(team){
       conf_record <- (page %>%
                         xml2::read_html() %>%
                         rvest::html_elements("td:nth-child(5) > span"))
-      conf_record <- dplyr::bind_rows(lapply(rvest::html_text(conf_record),
-                                             function(x){
-                                               data.frame(x, stringsAsFactors=FALSE)
-                                             }))
-      conf_record <- conf_record %>% dplyr::rename(WL.Conf = .data$x)
+      conf_record <- bind_rows.(lapply(rvest::html_text(conf_record),
+                                       function(x){
+                                         data.frame(x, stringsAsFactors=FALSE)
+                                       }))
+      conf_record <- conf_record %>% dplyr::rename(WL.Conf = x)
       tmrank <- conf %>% rvest::html_elements(".tmrank")
       
       # xml2::xml_remove(tmrank)
@@ -71,148 +71,104 @@ kp_team_history <- function(team){
       
       
       suppressWarnings(
-        conf <- conf %>% dplyr::filter(!is.na(as.numeric(.data$AdjT)))
+        conf <- conf %>% filter.(!is.na(as.numeric(AdjT))) %>%
+          as.data.frame()
       )
-      x <- x %>% dplyr::select(-.data$WL)
+      x <- x %>% select.(-WL) %>%
+        as.data.frame()
       x <- x %>%
-        dplyr::filter(!is.na(.data$Year)) %>%
-        dplyr::mutate(
-          AdjT.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$AdjT)) == 4, stri_sub(.data$AdjT, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$AdjT)) == 3, stri_sub(.data$AdjT, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$AdjT)) == 2, stri_sub(.data$AdjT, -1),'N')))),
-          AdjO.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$AdjO)) == 4, stri_sub(.data$AdjO, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$AdjO)) == 3, stri_sub(.data$AdjO, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$AdjO)) == 2, stri_sub(.data$AdjO, -1),'N')))),
-          AdjD.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$AdjD)) == 4, stri_sub(.data$AdjD, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$AdjD)) == 3, stri_sub(.data$AdjD, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$AdjD)) == 2, stri_sub(.data$AdjD, -1),'N')))),
-          Off.eFG.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.eFG.Pct)) == 4, stri_sub(.data$Off.eFG.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.eFG.Pct)) == 3, stri_sub(.data$Off.eFG.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.eFG.Pct)) == 2, stri_sub(.data$Off.eFG.Pct, -1),'N')))),
-          Off.TO.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.TO.Pct)) == 4, stri_sub(.data$Off.TO.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.TO.Pct)) == 3, stri_sub(.data$Off.TO.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.TO.Pct)) == 2, stri_sub(.data$Off.TO.Pct, -1),'N')))),
-          Off.OR.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.OR.Pct)) == 4, stri_sub(.data$Off.OR.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.OR.Pct)) == 3, stri_sub(.data$Off.OR.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.OR.Pct)) == 2, stri_sub(.data$Off.OR.Pct, -1),'N')))),
-          Off.FTRate.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.FTRate)) == 4, stri_sub(.data$Off.FTRate, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.FTRate)) == 3, stri_sub(.data$Off.FTRate, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.FTRate)) == 2, stri_sub(.data$Off.FTRate, -1),'N')))),
-          Off.FG_2.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.FG_2.Pct)) == 4, stri_sub(.data$Off.FG_2.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.FG_2.Pct)) == 3, stri_sub(.data$Off.FG_2.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.FG_2.Pct)) == 2, stri_sub(.data$Off.FG_2.Pct, -1),'N')))),
-          Off.FG_3.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.FG_3.Pct)) == 4, stri_sub(.data$Off.FG_3.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.FG_3.Pct)) == 3, stri_sub(.data$Off.FG_3.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.FG_3.Pct)) == 2, stri_sub(.data$Off.FG_3.Pct, -1),'N')))),
-          Off.FT.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.FT.Pct)) == 4, stri_sub(.data$Off.FT.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.FT.Pct)) == 3, stri_sub(.data$Off.FT.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.FT.Pct)) == 2, stri_sub(.data$Off.FT.Pct, -1),'N')))),
-          Off.FG_3A.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.FG_3A.Pct)) == 4, stri_sub(.data$Off.FG_3A.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.FG_3A.Pct)) == 3, stri_sub(.data$Off.FG_3A.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.FG_3A.Pct)) == 2, stri_sub(.data$Off.FG_3A.Pct, -1),'N')))),
-          Off.A.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.A.Pct)) == 4, stri_sub(.data$Off.A.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.A.Pct)) == 3, stri_sub(.data$Off.A.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.A.Pct)) == 2, stri_sub(.data$Off.A.Pct, -1),'N')))),
-          Off.APL.Rk =  as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Off.APL)) == 4, stri_sub(.data$Off.APL, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Off.APL)) == 3, stri_sub(.data$Off.APL, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Off.APL)) == 2, stri_sub(.data$Off.APL, -1),'N')))),
-          Def.eFG.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.eFG.Pct)) == 4, stri_sub(.data$Def.eFG.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.eFG.Pct)) == 3, stri_sub(.data$Def.eFG.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.eFG.Pct)) == 2, stri_sub(.data$Def.eFG.Pct, -1),'N')))),
-          Def.TO.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.TO.Pct)) == 4, stri_sub(.data$Def.TO.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.TO.Pct)) == 3, stri_sub(.data$Def.TO.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.TO.Pct)) == 2, stri_sub(.data$Def.TO.Pct, -1),'N')))),
-          Def.OR.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.OR.Pct)) == 4, stri_sub(.data$Def.OR.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.OR.Pct)) == 3, stri_sub(.data$Def.OR.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.OR.Pct)) == 2, stri_sub(.data$Def.OR.Pct, -1),'N')))),
-          Def.FTRate.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.FTRate)) == 4, stri_sub(.data$Def.FTRate, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.FTRate)) == 3, stri_sub(.data$Def.FTRate, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.FTRate)) == 2, stri_sub(.data$Def.FTRate, -1),'N')))),
-          Def.FG_2.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.FG_2.Pct)) == 4, stri_sub(.data$Def.FG_2.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.FG_2.Pct)) == 3, stri_sub(.data$Def.FG_2.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.FG_2.Pct)) == 2, stri_sub(.data$Def.FG_2.Pct, -1),'N')))),
-          Def.FG_3.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.FG_3.Pct)) == 4, stri_sub(.data$Def.FG_3.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.FG_3.Pct)) == 3, stri_sub(.data$Def.FG_3.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.FG_3.Pct)) == 2, stri_sub(.data$Def.FG_3.Pct, -1),'N')))),
-          Def.Blk.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.Blk.Pct)) == 4, stri_sub(.data$Def.Blk.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.Blk.Pct)) == 3, stri_sub(.data$Def.Blk.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.Blk.Pct)) == 2, stri_sub(.data$Def.Blk.Pct, -1),'N')))),
-          Def.FG_3A.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.FG_3A.Pct)) == 4, stri_sub(.data$Def.FG_3A.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.FG_3A.Pct)) == 3, stri_sub(.data$Def.FG_3A.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.FG_3A.Pct)) == 2, stri_sub(.data$Def.FG_3A.Pct, -1),'N')))),
-          Def.A.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.A.Pct)) == 4, stri_sub(.data$Def.A.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.A.Pct)) == 3, stri_sub(.data$Def.A.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.A.Pct)) == 2, stri_sub(.data$Def.A.Pct, -1),'N')))),
-          Def.APL.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Def.APL)) == 4, stri_sub(.data$Def.APL, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Def.APL)) == 3, stri_sub(.data$Def.APL, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Def.APL)) == 2, stri_sub(.data$Def.APL, -1),'N')))),
-          Foul2Partic.Pct.Rk = as.numeric(ifelse(nchar(sub('.*\\.', '', .data$Foul2Partic.Pct)) == 4, stri_sub(.data$Foul2Partic.Pct, -3), ifelse(
-            nchar(sub('.*\\.', '', .data$Foul2Partic.Pct)) == 3, stri_sub(.data$Foul2Partic.Pct, -2), ifelse(
-              nchar(sub('.*\\.', '', .data$Foul2Partic.Pct)) == 2, stri_sub(.data$Foul2Partic.Pct, -1),'N')))),
+        filter(!is.na(Year)) %>%
+        mutate.(
+          AdjT.Rk = as.numeric(stri_sub(AdjT, -nchar(sub('.*\\.', '', AdjT))+1)),
+          AdjO.Rk = as.numeric(stri_sub(AdjO, -nchar(sub('.*\\.', '', AdjO))+1)),
+          AdjD.Rk = as.numeric(stri_sub(AdjD, -nchar(sub('.*\\.', '', AdjD))+1)),
+          Off.eFG.Pct.Rk = as.numeric(stri_sub(Off.eFG.Pct, -nchar(sub('.*\\.', '', Off.eFG.Pct))+1)),
+          Off.TO.Pct.Rk = as.numeric(stri_sub(Off.TO.Pct, -nchar(sub('.*\\.', '', Off.TO.Pct))+1)),
+          Off.OR.Pct.Rk = as.numeric(stri_sub(Off.OR.Pct, -nchar(sub('.*\\.', '', Off.OR.Pct))+1)),
+          Off.FTRate.Rk = as.numeric(stri_sub(Off.FTRate, -nchar(sub('.*\\.', '', Off.FTRate))+1)),
+          Off.FG_2.Pct.Rk = as.numeric(stri_sub(Off.FG_2.Pct, -nchar(sub('.*\\.', '', Off.FG_2.Pct))+1)),
+          Off.FG_3.Pct.Rk = as.numeric(stri_sub(Off.FG_3.Pct, -nchar(sub('.*\\.', '', Off.FG_3.Pct))+1)),
+          Off.FT.Pct.Rk = as.numeric(stri_sub(Off.FT.Pct, -nchar(sub('.*\\.', '', Off.FT.Pct))+1)),
+          Off.FG_3A.Pct.Rk = as.numeric(stri_sub(Off.FG_3A.Pct, -nchar(sub('.*\\.', '', Off.FG_3A.Pct))+1)),
+          Off.A.Pct.Rk = as.numeric(stri_sub(Off.A.Pct, -nchar(sub('.*\\.', '', Off.A.Pct))+1)),
+          Off.APL.Rk =  as.numeric(stri_sub(Off.APL, -nchar(sub('.*\\.', '', Off.APL))+1)),
+          Def.eFG.Pct.Rk = as.numeric(stri_sub(Def.eFG.Pct, -nchar(sub('.*\\.', '', Def.eFG.Pct))+1)),
+          Def.TO.Pct.Rk = as.numeric(stri_sub(Def.TO.Pct, -nchar(sub('.*\\.', '', Def.TO.Pct))+1)),
+          Def.OR.Pct.Rk = as.numeric(stri_sub(Def.OR.Pct, -nchar(sub('.*\\.', '', Def.OR.Pct))+1)),
+          Def.FTRate.Rk = as.numeric(stri_sub(Def.FTRate, -nchar(sub('.*\\.', '', Def.FTRate))+1)),
+          Def.FG_2.Pct.Rk = as.numeric(stri_sub(Def.FG_2.Pct, -nchar(sub('.*\\.', '', Def.FG_2.Pct))+1)),
+          Def.FG_3.Pct.Rk = as.numeric(stri_sub(Def.FG_3.Pct, -nchar(sub('.*\\.', '', Def.FG_3.Pct))+1)),
+          Def.Blk.Pct.Rk = as.numeric(stri_sub(Def.Blk.Pct, -nchar(sub('.*\\.', '', Def.Blk.Pct))+1)),
+          Def.FG_3A.Pct.Rk = as.numeric(stri_sub(Def.FG_3A.Pct, -nchar(sub('.*\\.', '', Def.FG_3A.Pct))+1)),
+          Def.A.Pct.Rk = as.numeric(stri_sub(Def.A.Pct, -nchar(sub('.*\\.', '', Def.A.Pct))+1)),
+          Def.APL.Rk = as.numeric(stri_sub(Def.APL, -nchar(sub('.*\\.', '', Def.APL))+1)),
+          Foul2Partic.Pct.Rk = as.numeric(stri_sub(Foul2Partic.Pct, -nchar(sub('.*\\.', '', Foul2Partic.Pct))+1)),
           
-          AdjT = substr(sprintf("%.*f",2, as.numeric(.data$AdjT)), 1,
-                        nchar(sprintf("%.*f",2, as.numeric(.data$AdjT))) - 1),
-          AdjO = substr(sprintf("%.*f",2, as.numeric(.data$AdjO)), 1,
-                        nchar(sprintf("%.*f",2, as.numeric(.data$AdjO))) - 1),
-          AdjD = substr(sprintf("%.*f",2, as.numeric(.data$AdjD)), 1,
-                        nchar(sprintf("%.*f",2, as.numeric(.data$AdjD))) - 1),
-          Off.eFG.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.eFG.Pct)), 1,
-                               nchar(sprintf("%.*f",2, as.numeric(.data$Off.eFG.Pct))) - 1),
-          Off.TO.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.TO.Pct)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Off.TO.Pct))) - 1),
-          Off.OR.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.OR.Pct)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Off.OR.Pct))) - 1),
+          AdjT = substr(sprintf("%.*f",2, as.numeric(AdjT)), 1,
+                        nchar(sprintf("%.*f",2, as.numeric(AdjT))) - 1),
           
-          Off.FTRate = substr(sprintf("%.*f",2, as.numeric(.data$Off.FTRate)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Off.FTRate))) - 1),
-          Off.FG_2.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.FG_2.Pct)), 1,
-                                nchar(sprintf("%.*f",2, as.numeric(.data$Off.FG_2.Pct))) - 1),
-          Off.FG_3.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.FG_3.Pct)), 1,
-                                nchar(sprintf("%.*f",2, as.numeric(.data$Off.FG_3.Pct))) - 1),
-          Off.FT.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.FT.Pct)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Off.FT.Pct))) - 1),
-          Off.FG_3A.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.FG_3A.Pct)), 1,
-                                 nchar(sprintf("%.*f",2, as.numeric(.data$Off.FG_3A.Pct))) - 1),
-          Off.A.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Off.A.Pct)), 1,
-                             nchar(sprintf("%.*f",2, as.numeric(.data$Off.A.Pct))) - 1),
-          Off.APL = substr(sprintf("%.*f",2, as.numeric(.data$Off.APL)), 1,
-                           nchar(sprintf("%.*f",2, as.numeric(.data$Off.APL))) - 1),
+          AdjO = substr(sprintf("%.*f",2, as.numeric(AdjO)), 1,
+                        nchar(sprintf("%.*f",2, as.numeric(AdjO))) - 1),
+          AdjD = substr(sprintf("%.*f",2, as.numeric(AdjD)), 1,
+                        nchar(sprintf("%.*f",2, as.numeric(AdjD))) - 1),
+          Off.eFG.Pct = substr(sprintf("%.*f",2, as.numeric(Off.eFG.Pct)), 1,
+                               nchar(sprintf("%.*f",2, as.numeric(Off.eFG.Pct))) - 1),
+          Off.TO.Pct = substr(sprintf("%.*f",2, as.numeric(Off.TO.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.TO.Pct))) - 1),
+          Off.OR.Pct = substr(sprintf("%.*f",2, as.numeric(Off.OR.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.OR.Pct))) - 1),
           
-          Def.eFG.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.eFG.Pct)), 1,
-                               nchar(sprintf("%.*f",2, as.numeric(.data$Def.eFG.Pct))) - 1),
-          Def.TO.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.TO.Pct)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Def.TO.Pct))) - 1),
-          Def.OR.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.OR.Pct)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Def.OR.Pct))) - 1),
-          Def.FTRate = substr(sprintf("%.*f",2, as.numeric(.data$Def.FTRate)), 1,
-                              nchar(sprintf("%.*f",2, as.numeric(.data$Def.FTRate))) - 1),
-          Def.FG_2.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.FG_2.Pct)), 1,
-                                nchar(sprintf("%.*f",2, as.numeric(.data$Def.FG_2.Pct))) - 1),
-          Def.FG_3.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.FG_3.Pct)), 1,
-                                nchar(sprintf("%.*f",2, as.numeric(.data$Def.FG_3.Pct))) - 1),
-          Def.Blk.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.Blk.Pct)), 1,
-                               nchar(sprintf("%.*f",2, as.numeric(.data$Def.Blk.Pct))) - 1),
+          Off.FTRate = substr(sprintf("%.*f",2, as.numeric(Off.FTRate)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.FTRate))) - 1),
+          Off.FG_2.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FG_2.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Off.FG_2.Pct))) - 1),
+          Off.FG_3.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FG_3.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Off.FG_3.Pct))) - 1),
+          Off.FT.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FT.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.FT.Pct))) - 1),
+          Off.FG_3A.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FG_3A.Pct)), 1,
+                                 nchar(sprintf("%.*f",2, as.numeric(Off.FG_3A.Pct))) - 1),
+          Off.A.Pct = substr(sprintf("%.*f",2, as.numeric(Off.A.Pct)), 1,
+                             nchar(sprintf("%.*f",2, as.numeric(Off.A.Pct))) - 1),
+          Off.APL = substr(sprintf("%.*f",2, as.numeric(Off.APL)), 1,
+                           nchar(sprintf("%.*f",2, as.numeric(Off.APL))) - 1),
           
-          Def.FG_3A.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.FG_3A.Pct)), 1,
-                                 nchar(sprintf("%.*f",2, as.numeric(.data$Def.FG_3A.Pct))) - 1),
-          Def.A.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Def.A.Pct)), 1,
-                             nchar(sprintf("%.*f",2, as.numeric(.data$Def.A.Pct))) - 1),
-          Def.APL = substr(sprintf("%.*f",2, as.numeric(.data$Def.APL)), 1,
-                           nchar(sprintf("%.*f",2, as.numeric(.data$Def.APL))) - 1),
-          Foul2Partic.Pct = substr(sprintf("%.*f",2, as.numeric(.data$Foul2Partic.Pct)), 1,
-                                   nchar(sprintf("%.*f",2, as.numeric(.data$Foul2Partic.Pct))) - 1),
+          Def.eFG.Pct = substr(sprintf("%.*f",2, as.numeric(Def.eFG.Pct)), 1,
+                               nchar(sprintf("%.*f",2, as.numeric(Def.eFG.Pct))) - 1),
+          Def.TO.Pct = substr(sprintf("%.*f",2, as.numeric(Def.TO.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Def.TO.Pct))) - 1),
+          Def.OR.Pct = substr(sprintf("%.*f",2, as.numeric(Def.OR.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Def.OR.Pct))) - 1),
+          Def.FTRate = substr(sprintf("%.*f",2, as.numeric(Def.FTRate)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Def.FTRate))) - 1),
+          Def.FG_2.Pct = substr(sprintf("%.*f",2, as.numeric(Def.FG_2.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Def.FG_2.Pct))) - 1),
+          Def.FG_3.Pct = substr(sprintf("%.*f",2, as.numeric(Def.FG_3.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Def.FG_3.Pct))) - 1),
+          Def.Blk.Pct = substr(sprintf("%.*f",2, as.numeric(Def.Blk.Pct)), 1,
+                               nchar(sprintf("%.*f",2, as.numeric(Def.Blk.Pct))) - 1),
           
-          Team.Finish = stringr::str_extract(.data$Coach, stringr::regex("R1|R2|S16|E8|F4|2nd|CH",ignore_case = FALSE)),
-          Coach = stringr::str_replace(.data$Coach, stringr::regex("R1|R2|S16|E8|F4|2nd|CH",ignore_case = FALSE),""),
-          NCAA_Seed = NA_integer_)
-      x <- dplyr::mutate(x,
-                         "NCAA_Seed" = sapply(.data$Coach, function(arg) { as.numeric(gsub("[^0-9]", "", arg)) }),
-                         "Coach" = sapply(.data$Coach, function(arg) {
-                           stringr::str_trim(stringr::str_replace(stringr::str_remove(arg,'\\d+| \\*| \\*+'),'\\*+','')) }))
+          Def.FG_3A.Pct = substr(sprintf("%.*f",2, as.numeric(Def.FG_3A.Pct)), 1,
+                                 nchar(sprintf("%.*f",2, as.numeric(Def.FG_3A.Pct))) - 1),
+          Def.A.Pct = substr(sprintf("%.*f",2, as.numeric(Def.A.Pct)), 1,
+                             nchar(sprintf("%.*f",2, as.numeric(Def.A.Pct))) - 1),
+          Def.APL = substr(sprintf("%.*f",2, as.numeric(Def.APL)), 1,
+                           nchar(sprintf("%.*f",2, as.numeric(Def.APL))) - 1),
+          Foul2Partic.Pct = substr(sprintf("%.*f",2, as.numeric(Foul2Partic.Pct)), 1,
+                                   nchar(sprintf("%.*f",2, as.numeric(Foul2Partic.Pct))) - 1),
+          
+          Team.Finish = stringr::str_extract(Coach, stringr::regex("R1|R2|S16|E8|F4|2nd|CH",ignore_case = FALSE)),
+          Coach = stringr::str_replace(Coach, stringr::regex("R1|R2|S16|E8|F4|2nd|CH",ignore_case = FALSE),""),
+          NCAA_Seed = NA_integer_) %>%
+        as.data.frame()
+      x <- mutate(x,
+                  "NCAA_Seed" = sapply(Coach, function(arg) { as.numeric(gsub("[^0-9]", "", arg)) }),
+                  "Coach" = sapply(Coach, function(arg) {
+                    stringr::str_trim(stringr::str_replace(stringr::str_remove(arg,'\\d+| \\*| \\*+'),'\\*+','')) }))
       
       suppressWarnings(
         x <- x %>%
-          dplyr::filter(!is.na(as.numeric(.data$AdjT))) %>%
+          dplyr::filter(!is.na(as.numeric(AdjT))) %>%
           dplyr::mutate_at(c('Year','Team.Rk','AdjT', 'AdjO',	'AdjD',
                              'Off.eFG.Pct',	'Off.TO.Pct',	'Off.OR.Pct','Off.FTRate',
                              'Off.FG_2.Pct',	'Off.FG_3.Pct',	'Off.FT.Pct',	'Off.FG_3A.Pct',
@@ -244,7 +200,7 @@ kp_team_history <- function(team){
   return(kenpom)
 }
 
-team_list <- list()
+kp_team_history('Duke')
 
 
 teams <- teams_links %>%
@@ -261,9 +217,9 @@ for (i in 1:nrow(teams)) {
 }
 tictoc::toc()
 
-tictoc::tic()
 plan(multisession)
-team_list <- future_map_dfr(teams[1:100,], kp_team_history)
+tictoc::tic()
+team_list <- future_map_dfr(teams[1:200,], kp_team_history)
 tictoc::toc()
 
 #need to look at regex for the ranking fields
