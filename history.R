@@ -5,6 +5,7 @@ library(rvest)
 library(stringi)
 library(DataExplorer)
 library(tidytable)
+library(furrr)
 
 
 
@@ -247,23 +248,32 @@ team_list <- list()
 
 
 teams <- teams_links %>%
-  filter(Year == 2022 & Team != 'St. Thomas') %>%
-  distinct(Team)
+  filter.(Year == 2022 & Team != 'St. Thomas') %>%
+  distinct.(Team) %>%
+  as.data.frame()
+
+tictoc::tic()
 
 for (i in 1:nrow(teams)) {
   team <- teams[i,1]
   hist <- kp_team_history(team)
   team_list[[i]] <- hist
 }
+tictoc::toc()
+
+tictoc::tic()
+plan(multisession)
+team_list <- future_map_dfr(teams[1:100,], kp_team_history)
+tictoc::toc()
 
 #need to look at regex for the ranking fields
 #issue with the column getting cut
 all_hist <- do.call(bind_rows, team_list) %>%
-  filter(year >= 2002) %>%
-  select(-c(coach,conf,off_apl,off_apl_rk,def_apl,def_apl_rk, foul2partic_pct, foul2partic_pct_rk,))
+  filter.(year >= 2002) %>%
+  select.(-c(coach,conf,off_apl,off_apl_rk,def_apl,def_apl_rk, foul2partic_pct, foul2partic_pct_rk,))
 
 tourney_teams <- all_hist %>%
-  filter(!is.na(team_finish))
+  filter.(!is.na(team_finish))
 
 s16_teams <- tourney_teams %>%
   filter.(!(team_finish %in% c('R1','R2'))) %>%
@@ -298,4 +308,4 @@ champions <- tourney_teams %>%
 
 
 s16_teams %>%
-  filter(ncaa_seed >= 10)
+  filter.(ncaa_seed >= 10)
