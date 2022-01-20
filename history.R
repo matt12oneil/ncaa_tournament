@@ -4,11 +4,8 @@ library(janitor)
 library(rvest)
 library(stringi)
 library(DataExplorer)
+library(tidytable)
 
-
-kp_pomeroy_ratings(min_year = 2022, max_year = 2022) %>%
-  clean_names() %>%
-  filter(adj_o_rk <= 20 & adj_d_rk <= 20)
 
 
 kp_team_history <- function(team){
@@ -294,12 +291,11 @@ champions <- tourney_teams %>%
   select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
 
-champions %>%
-  create_report(
-    report_title = 'Champs Data'
-  )
+# champions %>%
+#   create_report(
+#     report_title = 'Champs Data'
+#   )
 
 
 s16_teams %>%
-  filter(ncaa_seed >= 10) %>%
-  View()
+  filter(ncaa_seed >= 10)
