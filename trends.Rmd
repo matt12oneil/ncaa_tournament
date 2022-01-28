@@ -1,0 +1,440 @@
+---
+title: "NCAA Tournament Historical Outcomes"
+author: "Matt O'Neil"
+date: "1/23/2022"
+output: html_document
+---
+
+Next Steps
+
+* Create tables summarizing the results for each round
+  * How many of each end up inside the search results?
+  * What percentage of teams in a certain criteria make it to that level?
+  * What do the teams in a certain criteria look like that make it or lose earlier?
+  * Look at historical four factors of those teams
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(hoopR)
+library(janitor)
+library(rvest)
+library(stringi)
+library(DataExplorer)
+library(tidytable)
+library(furrr)
+library(ggplot2)
+library(glue)
+library(dplyr)
+library(ggrepel)
+library(gtExtras)
+library(gt)
+library(gghighlight)
+```
+
+## The Idea
+
+You've probably heard the statistic that every national champion in the Kenpom era has had a top-20 AdjO and AdjD, other than 2014 UConn. That can be informative when you're filling out the rest of your bracket, but I wanted a better sense of broader trends.
+
+For example:
+
+
+* What does the typical Final 4 team look like?
+  * What percentage of Final 4 teams fit the mold of the Kenpom champion?
+  * For those that don't, what trends stick out?
+* You probably know to pick a couple 12 and 13 seeds to win a game and maybe even get to the Sweet 16, but how do you determine which ones?
+  * Are there certain metrics, such as an elite offense or an elite defense, that makes them more likely to go far?
+  * Does it require a star, like Oral Roberts' Max Abmas?
+  * Are upsets more matchup dependent, such as Texas, a team that turned it over frequently, against Abilene Christian, a team that forces turnovers in droves?
+* What is a sign of a high sided team likely to be upset early?
+  * Like Texas, does it show up in the matchup?
+  * Is it a team that isn't as respected by Kenpom's metrics as it is by polls and record?
+  * Is it a team with an elite offense and a bad defense that has a really bad shooting day?
+
+
+# Champions
+* Only two teams fell out of the top-20 in either AdjO or AdjD
+  * An historical outlier in UConn (2014) and last year Baylor, but they just missed with the 22nd ranked Defense on a team ravaged by Covid for a period
+* Every other champion falls in the top 20 of both
+
+```{r history_function, eval=FALSE, include=FALSE}
+kp_team_history <- function(team){
+  
+  tryCatch(
+    expr = {
+      if (!has_kp_user_and_pw()) stop("This function requires a KenPom subscription e-mail and password combination,\n      set as the system environment variables KP_USER and KP_PW.", "\n       See ?kp_user_pw for details.", call. = FALSE)
+      
+      browser <- login()
+      
+      # Check teams parameter in teams list names
+      if(!(team %in% hoopR::teams_links$Team)){
+        cli::cli_abort( "Incorrect team name as compared to the website, see hoopR::teams_links for team name parameter specifications.")
+      }
+      teams_links <- hoopR::teams_links[hoopR::teams_links$Year == as.integer(format(Sys.Date(), "%Y")),]
+      team_name = teams_links$team.link.ref[teams_links$Team == team]
+      
+      ### Pull Data
+      url <- paste0("https://kenpom.com/history.php?",
+                    "t=",team_name)
+      
+      page <- rvest::session_jump_to(browser, url)
+      
+      header_cols<- c('Year','Team.Rk','Coach',	'Conf','WL',	'AdjT', 'AdjO',	'AdjD',
+                      'Off.eFG.Pct',	'Off.TO.Pct',	'Off.OR.Pct','Off.FTRate',
+                      'Off.FG_2.Pct',	'Off.FG_3.Pct',	'Off.FT.Pct',	'Off.FG_3A.Pct',
+                      'Off.A.Pct',	'Off.APL',
+                      'Def.eFG.Pct', 'Def.TO.Pct',	'Def.OR.Pct',	'Def.FTRate',
+                      'Def.FG_2.Pct',	'Def.FG_3.Pct',
+                      'Def.Blk.Pct',	'Def.FG_3A.Pct',	'Def.A.Pct',
+                      'Def.APL',	'Foul2Partic.Pct')
+      
+      x<- (page %>%
+             xml2::read_html() %>%
+             rvest::html_elements(css='#player-table'))[[1]]
+      
+      ## removing national rankings for easier manipulation
+      ## TODO: Add these rankings back as columns
+      conf <- (page %>%
+                 xml2::read_html() %>%
+                 rvest::html_elements(css='#player-table'))[[1]]
+      
+      conf_record <- (page %>%
+                        xml2::read_html() %>%
+                        rvest::html_elements("td:nth-child(5) > span"))
+      conf_record <- bind_rows.(lapply(rvest::html_text(conf_record),
+                                       function(x){
+                                         data.frame(x, stringsAsFactors=FALSE)
+                                       }))
+      conf_record <- conf_record %>% dplyr::rename(WL.Conf = x)
+      tmrank <- conf %>% rvest::html_elements(".tmrank")
+      
+      # xml2::xml_remove(tmrank)
+      
+      conf <- conf %>% rvest::html_table()
+      
+      colnames(conf) <- header_cols
+      
+      x <- x %>% rvest::html_table()
+      
+      colnames(x) <- header_cols
+      
+      
+      suppressWarnings(
+        conf <- conf %>% filter.(!is.na(as.numeric(AdjT))) %>%
+          as.data.frame()
+      )
+      x <- x %>% select.(-WL) %>%
+        as.data.frame()
+      x <- x %>%
+        filter(!is.na(Year)) %>%
+        mutate.(
+          AdjT.Rk = as.numeric(stri_sub(AdjT, -nchar(sub('.*\\.', '', AdjT))+1)),
+          AdjO.Rk = as.numeric(stri_sub(AdjO, -nchar(sub('.*\\.', '', AdjO))+1)),
+          AdjD.Rk = as.numeric(stri_sub(AdjD, -nchar(sub('.*\\.', '', AdjD))+1)),
+          Off.eFG.Pct.Rk = as.numeric(stri_sub(Off.eFG.Pct, -nchar(sub('.*\\.', '', Off.eFG.Pct))+1)),
+          Off.TO.Pct.Rk = as.numeric(stri_sub(Off.TO.Pct, -nchar(sub('.*\\.', '', Off.TO.Pct))+1)),
+          Off.OR.Pct.Rk = as.numeric(stri_sub(Off.OR.Pct, -nchar(sub('.*\\.', '', Off.OR.Pct))+1)),
+          Off.FTRate.Rk = as.numeric(stri_sub(Off.FTRate, -nchar(sub('.*\\.', '', Off.FTRate))+1)),
+          Off.FG_2.Pct.Rk = as.numeric(stri_sub(Off.FG_2.Pct, -nchar(sub('.*\\.', '', Off.FG_2.Pct))+1)),
+          Off.FG_3.Pct.Rk = as.numeric(stri_sub(Off.FG_3.Pct, -nchar(sub('.*\\.', '', Off.FG_3.Pct))+1)),
+          Off.FT.Pct.Rk = as.numeric(stri_sub(Off.FT.Pct, -nchar(sub('.*\\.', '', Off.FT.Pct))+1)),
+          Off.FG_3A.Pct.Rk = as.numeric(stri_sub(Off.FG_3A.Pct, -nchar(sub('.*\\.', '', Off.FG_3A.Pct))+1)),
+          Off.A.Pct.Rk = as.numeric(stri_sub(Off.A.Pct, -nchar(sub('.*\\.', '', Off.A.Pct))+1)),
+          Off.APL.Rk =  as.numeric(stri_sub(Off.APL, -nchar(sub('.*\\.', '', Off.APL))+1)),
+          Def.eFG.Pct.Rk = as.numeric(stri_sub(Def.eFG.Pct, -nchar(sub('.*\\.', '', Def.eFG.Pct))+1)),
+          Def.TO.Pct.Rk = as.numeric(stri_sub(Def.TO.Pct, -nchar(sub('.*\\.', '', Def.TO.Pct))+1)),
+          Def.OR.Pct.Rk = as.numeric(stri_sub(Def.OR.Pct, -nchar(sub('.*\\.', '', Def.OR.Pct))+1)),
+          Def.FTRate.Rk = as.numeric(stri_sub(Def.FTRate, -nchar(sub('.*\\.', '', Def.FTRate))+1)),
+          Def.FG_2.Pct.Rk = as.numeric(stri_sub(Def.FG_2.Pct, -nchar(sub('.*\\.', '', Def.FG_2.Pct))+1)),
+          Def.FG_3.Pct.Rk = as.numeric(stri_sub(Def.FG_3.Pct, -nchar(sub('.*\\.', '', Def.FG_3.Pct))+1)),
+          Def.Blk.Pct.Rk = as.numeric(stri_sub(Def.Blk.Pct, -nchar(sub('.*\\.', '', Def.Blk.Pct))+1)),
+          Def.FG_3A.Pct.Rk = as.numeric(stri_sub(Def.FG_3A.Pct, -nchar(sub('.*\\.', '', Def.FG_3A.Pct))+1)),
+          Def.A.Pct.Rk = as.numeric(stri_sub(Def.A.Pct, -nchar(sub('.*\\.', '', Def.A.Pct))+1)),
+          Def.APL.Rk = as.numeric(stri_sub(Def.APL, -nchar(sub('.*\\.', '', Def.APL))+1)),
+          Foul2Partic.Pct.Rk = as.numeric(stri_sub(Foul2Partic.Pct, -nchar(sub('.*\\.', '', Foul2Partic.Pct))+1)),
+          
+          AdjT = substr(sprintf("%.*f",2, as.numeric(AdjT)), 1,
+                        nchar(sprintf("%.*f",2, as.numeric(AdjT))) - 1),
+          
+          AdjO = substr(sprintf("%.*f",2, as.numeric(AdjO)), 1,
+                        nchar(sprintf("%.*f",2, as.numeric(AdjO))) - 1),
+          AdjD = substr(sprintf("%.*f",2, as.numeric(AdjD)), 1,
+                        nchar(sprintf("%.*f",2, as.numeric(AdjD))) - 1),
+          Off.eFG.Pct = substr(sprintf("%.*f",2, as.numeric(Off.eFG.Pct)), 1,
+                               nchar(sprintf("%.*f",2, as.numeric(Off.eFG.Pct))) - 1),
+          Off.TO.Pct = substr(sprintf("%.*f",2, as.numeric(Off.TO.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.TO.Pct))) - 1),
+          Off.OR.Pct = substr(sprintf("%.*f",2, as.numeric(Off.OR.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.OR.Pct))) - 1),
+          
+          Off.FTRate = substr(sprintf("%.*f",2, as.numeric(Off.FTRate)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.FTRate))) - 1),
+          Off.FG_2.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FG_2.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Off.FG_2.Pct))) - 1),
+          Off.FG_3.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FG_3.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Off.FG_3.Pct))) - 1),
+          Off.FT.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FT.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Off.FT.Pct))) - 1),
+          Off.FG_3A.Pct = substr(sprintf("%.*f",2, as.numeric(Off.FG_3A.Pct)), 1,
+                                 nchar(sprintf("%.*f",2, as.numeric(Off.FG_3A.Pct))) - 1),
+          Off.A.Pct = substr(sprintf("%.*f",2, as.numeric(Off.A.Pct)), 1,
+                             nchar(sprintf("%.*f",2, as.numeric(Off.A.Pct))) - 1),
+          Off.APL = substr(sprintf("%.*f",2, as.numeric(Off.APL)), 1,
+                           nchar(sprintf("%.*f",2, as.numeric(Off.APL))) - 1),
+          
+          Def.eFG.Pct = substr(sprintf("%.*f",2, as.numeric(Def.eFG.Pct)), 1,
+                               nchar(sprintf("%.*f",2, as.numeric(Def.eFG.Pct))) - 1),
+          Def.TO.Pct = substr(sprintf("%.*f",2, as.numeric(Def.TO.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Def.TO.Pct))) - 1),
+          Def.OR.Pct = substr(sprintf("%.*f",2, as.numeric(Def.OR.Pct)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Def.OR.Pct))) - 1),
+          Def.FTRate = substr(sprintf("%.*f",2, as.numeric(Def.FTRate)), 1,
+                              nchar(sprintf("%.*f",2, as.numeric(Def.FTRate))) - 1),
+          Def.FG_2.Pct = substr(sprintf("%.*f",2, as.numeric(Def.FG_2.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Def.FG_2.Pct))) - 1),
+          Def.FG_3.Pct = substr(sprintf("%.*f",2, as.numeric(Def.FG_3.Pct)), 1,
+                                nchar(sprintf("%.*f",2, as.numeric(Def.FG_3.Pct))) - 1),
+          Def.Blk.Pct = substr(sprintf("%.*f",2, as.numeric(Def.Blk.Pct)), 1,
+                               nchar(sprintf("%.*f",2, as.numeric(Def.Blk.Pct))) - 1),
+          
+          Def.FG_3A.Pct = substr(sprintf("%.*f",2, as.numeric(Def.FG_3A.Pct)), 1,
+                                 nchar(sprintf("%.*f",2, as.numeric(Def.FG_3A.Pct))) - 1),
+          Def.A.Pct = substr(sprintf("%.*f",2, as.numeric(Def.A.Pct)), 1,
+                             nchar(sprintf("%.*f",2, as.numeric(Def.A.Pct))) - 1),
+          Def.APL = substr(sprintf("%.*f",2, as.numeric(Def.APL)), 1,
+                           nchar(sprintf("%.*f",2, as.numeric(Def.APL))) - 1),
+          Foul2Partic.Pct = substr(sprintf("%.*f",2, as.numeric(Foul2Partic.Pct)), 1,
+                                   nchar(sprintf("%.*f",2, as.numeric(Foul2Partic.Pct))) - 1),
+          
+          Team.Finish = stringr::str_extract(Coach, stringr::regex("R1|R2|S16|E8|F4|2nd|CH",ignore_case = FALSE)),
+          Coach = stringr::str_replace(Coach, stringr::regex("R1|R2|S16|E8|F4|2nd|CH",ignore_case = FALSE),""),
+          NCAA_Seed = NA_integer_) %>%
+        as.data.frame()
+      x <- mutate(x,
+                  "NCAA_Seed" = sapply(Coach, function(arg) { as.numeric(gsub("[^0-9]", "", arg)) }),
+                  "Coach" = sapply(Coach, function(arg) {
+                    stringr::str_trim(stringr::str_replace(stringr::str_remove(arg,'\\d+| \\*| \\*+'),'\\*+','')) }))
+      
+      suppressWarnings(
+        x <- x %>%
+          dplyr::filter(!is.na(as.numeric(AdjT))) %>%
+          dplyr::mutate_at(c('Year','Team.Rk','AdjT', 'AdjO',	'AdjD',
+                             'Off.eFG.Pct',	'Off.TO.Pct',	'Off.OR.Pct','Off.FTRate',
+                             'Off.FG_2.Pct',	'Off.FG_3.Pct',	'Off.FT.Pct',	'Off.FG_3A.Pct',
+                             'Off.A.Pct',	'Off.APL',
+                             'Def.eFG.Pct', 'Def.TO.Pct',	'Def.OR.Pct',	'Def.FTRate',
+                             'Def.FG_2.Pct',	'Def.FG_3.Pct',
+                             'Def.Blk.Pct',	'Def.FG_3A.Pct',	'Def.A.Pct',
+                             'Def.APL',	'Foul2Partic.Pct',
+                             'Off.eFG.Pct.Rk',	'Off.TO.Pct.Rk',	'Off.OR.Pct.Rk','Off.FTRate.Rk',
+                             'Off.FG_2.Pct.Rk',	'Off.FG_3.Pct.Rk',	'Off.FT.Pct.Rk',	'Off.FG_3A.Pct.Rk',
+                             'Off.A.Pct.Rk',	'Off.APL.Rk',
+                             'Def.eFG.Pct.Rk', 'Def.TO.Pct.Rk',	'Def.OR.Pct.Rk',	'Def.FTRate.Rk',
+                             'Def.FG_2.Pct.Rk',	'Def.FG_3.Pct.Rk',
+                             'Def.Blk.Pct.Rk',	'Def.FG_3A.Pct.Rk',	'Def.A.Pct.Rk',
+                             'Def.APL.Rk',	'Foul2Partic.Pct.Rk'
+          ), as.numeric)
+      )
+      
+      
+      x <- x %>%
+        dplyr::mutate(Team = team_name) %>%
+        dplyr::select(.data$Year, .data$Team.Rk,.data$Team,tidyr::everything())
+      ### Store Data
+      kenpom <- x %>%
+        janitor::clean_names()
+      
+    }
+  )
+  return(kenpom)
+}
+
+teams <- teams_links %>%
+  filter.(Year == 2022 & Team != 'St. Thomas') %>%
+  distinct.(Team) %>%
+  as.data.frame()
+
+
+team_list <- map_dfr(teams[1:nrow(teams),], kp_team_history)
+
+all_hist <- do.call(bind_rows, team_list) %>%
+  filter.(year >= 2002) %>%
+  select.(-c(coach,conf,off_apl,off_apl_rk,def_apl,def_apl_rk, foul2partic_pct, foul2partic_pct_rk))
+
+all_hist$team_finish <- factor(all_hist$team_finish,levels = c('R1','R2','S16','E8','F4','2nd','CH'))
+
+tourney_teams <- all_hist %>%
+  filter.(!is.na(team_finish))
+```
+
+
+```{r finish_levels, include=FALSE}
+tourney_teams <- readr::read_csv2(file = '/Users/mattoneil/Documents/MO/ncaa_tournament/tourney_teams.csv')
+
+
+
+tourney_teams$team_finish <- factor(tourney_teams$team_finish,levels = c('R1','R2','S16','E8','F4','2nd','CH'))
+
+s16_teams <- tourney_teams %>%
+  filter.(!(team_finish %in% c('R1','R2'))) %>%
+  select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+e8_teams <- tourney_teams %>%
+  filter.(!(team_finish %in% c('R1','R2','S16'))) %>%
+  select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+f4_teams <- tourney_teams %>%
+  filter.(!(team_finish %in% c('R1','R2','S16','E8'))) %>%
+  select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+final_teams <- tourney_teams %>%
+  filter.(!(team_finish %in% c('R1','R2','S16','E8','F4'))) %>%
+  select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+champions <- tourney_teams %>%
+  filter.(team_finish == 'CH') %>%
+  select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+ff <- kp_fourfactors(min_year = 2022, max_year = 2022) %>%
+  clean_names()
+```
+
+```{r champions_gg, echo=FALSE}
+champs <- ggplot(champions, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + labs(title = 'Champions by AdjO & AdjD Rank', subtitle = 'Any Teams with an Offense or Defense outside Top-20 is highlighted') + gghighlight(adj_o_rk > 20 | adj_d_rk > 20)
+
+plot(champs)
+```
+
+```{r champions_gt, echo=FALSE}
+#this is a criteria every champion fits into
+champions %>%
+  filter((adj_o_rk > 20 | adj_d_rk > 20)) %>%
+  select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt()
+```
+<br>
+
+## Championship Takeaways
+
+* That leaves us with the following teams that have a chance of winning a title right now
+* It's early right now so there's time for others to join
+* It remains to be seen how much progress could be made, but this is not a final list right now
+
+<br>
+``` {r possible_champs, echo=FALSE}
+ff %>%
+  #filter((adj_o_rk <= 20 & adj_d_rk <= 20) & (adj_o_rk <= 50 & adj_d_rk <= 50)) %>%
+  filter(adj_o_rk <= 20 & adj_d_rk <= 20) %>%
+  select(team, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt() %>%
+  tab_header(title = 'Possible Champions for 2022', subtitle = 'Offense and Defense in the Top 20')
+```
+
+
+# Final
+
+* Of teams that made the final, only four were outside the top 10 in both O-Rank and D-Rank
+  * Syracuse (Carmelo Anthony), Butler (Gordon Hayward), and UConn (Kemba Walker) all made a deep run on the backs of of their stars
+* All other teams made the top-10, proving that teams with elite tools can make up for a lack of another, but that one elite tool is crucial
+
+```{r final_gg, echo=FALSE}
+final <- ggplot(final_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight(adj_o_rk > 10 & adj_d_rk > 10) + labs(title = 'Final Teams by AdjO & AdjD Rank', subtitle = 'Any Teams with an Offense and Defense outside Top-10 is highlighted')
+plot(final)
+```
+
+
+
+``` {r final_gt, echo=FALSE}
+final_teams %>%
+  filter((adj_o_rk > 10 & adj_d_rk > 10) & (adj_o_rk > 30 | adj_d_rk > 30)) %>%
+  select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt()
+```
+
+``` {r final_possible, echo=FALSE}
+ff %>%
+  filter((adj_o_rk <= 10 | adj_d_rk <= 10) & (adj_o_rk <= 30 & adj_d_rk <= 30)) %>%
+  select(team, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt() %>%
+  tab_header(title = 'Possible Teams to make the National Championship', subtitle = 'Offense or Defense in top-10 and Both in top-30')
+```
+
+# Final 4
+
+* Only 8 Final Four teams were outside the top 15 in both O-Rank and D-Rank
+* There's probably more of a pattern that can be found here
+* This is a good start, but it's not too telling as far as saying who has a chance of making it
+
+```{r final4_gg, echo=FALSE}
+f4 <- ggplot(f4_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight(adj_o_rk > 15 & adj_d_rk > 15) + labs(title = 'Final 4 Teams by AdjO & AdjD Rank', subtitle = 'Any Teams with an Offense and Defense outside Top-15 is highlighted')
+plot(f4)
+```
+
+```{r final4_gt, echo =FALSE}
+f4_teams %>%
+  filter((adj_o_rk > 10 & adj_d_rk > 10) & (adj_o_rk > 40 | adj_d_rk > 40)) %>%
+  select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt()
+```
+
+```{r final4_possibles, echo=FALSE}
+ff %>%
+  filter((adj_o_rk <= 15 | adj_d_rk <= 15) & (adj_o_rk <= 40 & adj_d_rk <= 40)) %>%
+  select(team, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt() %>%
+  tab_header(title = 'Teams with a Chance to Make the Final 4',subtitle = 'With either a top-15 Offense or Defense and both within top-40')
+```
+
+```{r elite8_gg, echo=FALSE}
+e8 <- ggplot(e8_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight(adj_o_rk > 20 & adj_d_rk > 20) + labs(title = 'Elite 8 Teams by AdjO & AdjD Rank', subtitle = 'Any Teams with an Offense and Defense outside Top-20 is highlighted')
+plot(e8)
+```
+
+```{r elite8_gt, echo=FALSE}
+e8_teams %>%
+  filter((adj_o_rk > 20 & adj_d_rk > 20) & (adj_o_rk > 50 | adj_d_rk > 50)) %>%
+  select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt()
+```
+
+```{r elite8_possibles, echo=FALSE}
+ff %>%
+  filter((adj_o_rk <= 20 | adj_d_rk <= 20) & (adj_o_rk <= 50 & adj_d_rk <= 50)) %>%
+  select(team, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt() %>%
+  tab_header(title = 'Teams with a Chance to Make the Elite 8',subtitle = 'Teams with a Top-20 Offense or Defense and Both in the top-50')
+```
+
+```{r sweet16_gg, echo=FALSE}
+s16 <- ggplot(s16_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight(adj_o_rk > 40 & adj_d_rk > 40) + labs(title = 'Sweet 16 Teams by AdjO & AdjD Rank', subtitle = 'Any Teams with an Offense and Defense outside Top-40 is highlighted')
+plot(s16)
+```
+
+``` {r sweet16_gt, echo=FALSE}
+s16_teams %>%
+  filter((adj_o_rk > 30 & adj_d_rk > 30) & (adj_o_rk > 65 | adj_d_rk > 65))%>%
+  select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt()
+```
+
+```{r sweet16_possibles, echo=FALSE}
+ff %>%
+  filter((adj_o_rk <= 40 | adj_d_rk <= 40) & (adj_o_rk <= 65 & adj_d_rk <= 65)) %>%
+  select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  gt() %>%
+  tab_header(title = 'Teams with a Chance to Make the Sweet 16', subtitle = 'Offense and Defense in the Top 40 and both in top-65')
+```
+
+``` {r s16_expected, echo=FALSE}
+tourney_teams %>%
+  #filter(adj_o_rk <= 20 & adj_d_rk <= 20) %>%
+  filter((adj_o_rk <= 40 | adj_d_rk <= 40) & (adj_d_rk <= 50 & adj_o_rk <= 50)) %>%
+  #filter(adj_o_rk <= 5 | adj_d_rk <= 5) %>%
+  group_by(team_finish) %>%
+  summarize(total = n()) %>%
+  arrange(team_finish) %>%
+  gt()
+```
+
+
+
+
