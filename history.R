@@ -233,6 +233,8 @@ all_hist <- do.call(bind_rows, team_list) %>%
 tourney_teams <- all_hist %>%
   filter.(!is.na(team_finish))
 
+write_csv2(tourney_teams, file = '/Users/mattoneil/Documents/MO/ncaa_tournament/tourney_teams.csv')
+
 s16_teams <- tourney_teams %>%
   filter.(!(team_finish %in% c('R1','R2'))) %>%
   select.(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
