@@ -202,6 +202,8 @@ kp_team_history <- function(team){
 
 kp_team_history('Duke')
 
+session_set_response(x, resp)
+
 
 teams <- teams_links %>%
   filter.(Year == 2022 & Team != 'St. Thomas') %>%
@@ -219,7 +221,7 @@ tictoc::toc()
 
 plan(multisession)
 tictoc::tic()
-team_list <- future_map_dfr(teams[1:200,], kp_team_history)
+team_list <- map_dfr(teams[1:357,], kp_team_history)
 tictoc::toc()
 
 #need to look at regex for the ranking fields
