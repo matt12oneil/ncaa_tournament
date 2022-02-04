@@ -401,49 +401,49 @@ lazy_dt(ff) %>%
 ```
 
 ```{r elite8_gg, echo=FALSE}
-e8 <- ggplot(e8_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight((adj_o_rk + adj_d_rk > 80) & (adj_o_rk > 20 & adj_d_rk > 20)) + labs(title = 'Elite 8 Teams by AdjO & AdjD Rank', subtitle = 'Offense + Defense > 80 & Both Outisde top-20') + coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on")
+e8 <- ggplot(e8_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight((adj_o_rk + adj_d_rk > 80) | (adj_o_rk > 20 & adj_d_rk > 20)) + labs(title = 'Elite 8 Teams by AdjO & AdjD Rank', subtitle = 'Offense + Defense > 80 & Both Outisde top-20') + coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on")
 plot(e8)
 ```
 
 ```{r elite8_gt, echo=FALSE}
 lazy_dt(e8_teams) %>%
-  filter((adj_o_rk + adj_d_rk > 80) & (adj_o_rk > 20 & adj_d_rk > 20)) %>%
+  filter((adj_o_rk + adj_d_rk > 80) | (adj_o_rk > 25 & adj_d_rk > 25)) %>%
   select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
   as.data.frame() %>%
   gt() %>%
-  tab_header(title = 'Elite 8 History',subtitle = 'Offense + Defense > 80 & Both Outisde top-20')
+  tab_header(title = 'Elite 8 History',subtitle = 'Offense + Defense > 80 or Both Outisde top-25')
 ```
 
 ```{r elite8_possibles, echo=FALSE}
 lazy_dt(ff) %>%
-  filter((adj_o_rk + adj_d_rk <= 80) & (adj_o_rk <= 20 | adj_d_rk <= 20)) %>%
+  filter((adj_o_rk + adj_d_rk <= 80) & (adj_o_rk <= 25 | adj_d_rk <= 25)) %>%
   select(team, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>% 
   as.data.frame() %>%
   gt() %>%
-  tab_header(title = '2022 Teams with a Chance to Make the Elite 8',subtitle = 'Offense + Defense <= 80 & One in top-20')
+  tab_header(title = '2022 Teams with a Chance to Make the Elite 8',subtitle = 'Offense + Defense <= 80 & One in top-25')
 ```
 
 ```{r sweet16_gg, echo=FALSE}
-s16 <- ggplot(s16_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight((adj_o_rk + adj_d_rk > 100) & (adj_o_rk > 40 & adj_d_rk > 40)) + labs(title = 'Sweet 16 Teams by AdjO & AdjD Rank', subtitle = 'Offense + Defense > 100 & Both Outisde top-40') + coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on")
+s16 <- ggplot(s16_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight((adj_o_rk + adj_d_rk > 100) | (adj_o_rk > 50 & adj_d_rk > 50)) + labs(title = 'Sweet 16 Teams by AdjO & AdjD Rank', subtitle = 'Offense + Defense > 100 & Both Outisde top-50') + coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on")
 plot(s16)
 ```
 
 ``` {r sweet16_gt, echo=FALSE}
 lazy_dt(s16_teams) %>%
-  filter((adj_o_rk + adj_d_rk > 100) & (adj_o_rk > 40 & adj_d_rk > 40))%>%
+  filter((adj_o_rk + adj_d_rk > 100) | (adj_o_rk > 50 & adj_d_rk > 50))%>%
   select(team, year, seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
   as.data.frame() %>%
   gt() %>%
-  tab_header(title = 'Sweet 16 History',subtitle = 'Offense + Defense > 100 & Both Outisde top-40')
+  tab_header(title = 'Sweet 16 History',subtitle = 'Offense + Defense > 100 & Both Outisde top-50')
 ```
 
 ```{r sweet16_possibles, echo=FALSE}
 lazy_dt(ff) %>%
-  filter((adj_o_rk + adj_d_rk < 100) & (adj_o <= 40 | adj_d_rk <= 40)) %>%
+  filter((adj_o_rk + adj_d_rk <= 100) & (adj_o_rk <= 50 | adj_d_rk <= 50)) %>%
   select(team, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
   as.data.frame() %>%
   gt() %>%
-  tab_header(title = 'Teams with a Chance to Make the Sweet 16', subtitle = 'Offense + Defense < 100 & One Inside top-40')
+  tab_header(title = 'Teams with a Chance to Make the Sweet 16', subtitle = 'Offense + Defense <= 100 & One Inside top-50')
 ```
 
 ```{undefined eval=FALSE, include=FALSE}
