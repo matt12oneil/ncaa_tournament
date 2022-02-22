@@ -2,7 +2,7 @@
 title: "NCAA Tournament Historical Outcomes"
 author: "Matt O'Neil"
 date: "2/22/2022"
-output: html_document
+output: slidy_presentation
 ---
 
 ```{r setup, include=FALSE}
@@ -54,10 +54,7 @@ For example:
   * Is it a team with an elite offense and a bad defense that has a really bad shooting day?
 
 
-# Champions
-* Only two teams fell out of the top-20 in either AdjO or AdjD
-  * An historical outlier in UConn (2014) and last year Baylor, but they just missed with the 22nd ranked Defense on a team ravaged by Covid for a period
-* Every other champion falls in the top 20 of both
+
 
 ```{r history_function, eval=FALSE, include=FALSE}
 kp_team_history <- function(team){
@@ -300,6 +297,11 @@ ff <- kp_fourfactors(min_year = 2022, max_year = 2022) %>%
   clean_names()
 ```
 
+## Champions
+* Only two teams fell out of the top-20 in either AdjO or AdjD
+  * An historical outlier in UConn (2014) and last year Baylor, but they just missed with the 22nd ranked Defense on a team ravaged by Covid for a period
+* Every other champion falls in the top 20 of both
+
 ```{r champions_gg, echo=FALSE}
 champs <- ggplot(champions, aes(x = adj_o_rk, y = adj_d_rk)) + 
   geom_point() + 
@@ -318,7 +320,6 @@ ch_history <- champions %>%
 ch_history %>%
   gt()
 ```
-<br>
 
 ## Championship Takeaways
 
@@ -340,7 +341,7 @@ ch_possible %>%
 ```
 
 
-# Final
+## Final History
 
 * Of teams that made the final, only four were outside the top 10 in both O-Rank and D-Rank
   * Syracuse (Carmelo Anthony), Butler (Gordon Hayward), and UConn (Kemba Walker) all made a deep run on the backs of of their stars
@@ -363,6 +364,7 @@ final_history %>%
   tab_header(title = 'Championship Game History', subtitle = glue('Offense + Defense > {final_od}'))
 ```
 
+## Final Takeaways
 ```{r final_possibles, echo=FALSE}
 final_possibles <- ff %>%
   filter(adj_o_rk + adj_d_rk <= final_od) %>%
@@ -374,7 +376,7 @@ final_possibles %>%
   tab_header(title = '2022 Possible Teams to make the National Championship', subtitle = glue('Offense + Defense <= {final_od}'))
 ```
 
-# Final 4
+## Final 4 History
 
 * Only 8 Final Four teams were outside the top 15 in both O-Rank and D-Rank
 * There's probably more of a pattern that can be found here
@@ -401,6 +403,8 @@ f4_history %>%
   tab_header(title = 'Final 4 History',subtitle = glue('Offense + Defense > {f4_od}'))
 ```
 
+
+## Final 4 Takeaways
 ```{r final4_possibles, echo=FALSE}
 f4_possibles <- ff %>%
   #filter((adj_o_rk <= f4_od | adj_d_rk <= f4_od)) %>%
@@ -413,6 +417,8 @@ f4_possibles %>%
   tab_header(title = '2022 Teams with a Chance to Make the Final 4',subtitle = glue('Offense + Defense <= {f4_od}'))
 ```
 
+
+## Elite 8 History
 ```{r elite8_gg, echo=FALSE}
 e8 <- ggplot(e8_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + 
   #gghighlight((adj_o_rk + adj_d_rk > 80) | (adj_o_rk > 20 & adj_d_rk > 20)) + 
@@ -434,6 +440,9 @@ e8_history %>%
   tab_header(title = 'Elite 8 History',subtitle = glue('Offense + Defense > {e8_od}'))
 ```
 
+
+## Elite 8 Takeaways
+
 ```{r elite8_possibles, echo=FALSE}
 e8_possibles <- ff %>%
   #filter((adj_o_rk + adj_d_rk <= 80) & (adj_o_rk <= 25 | adj_d_rk <= 25)) %>%
@@ -446,6 +455,9 @@ e8_possibles %>%
   #tab_header(title = '2022 Teams with a Chance to Make the Elite 8',subtitle = 'Offense + Defense <= 80 & One in top-25')
   tab_header(title = '2022 Teams with a Chance to Make the Elite 8',subtitle = glue('Offense + Defense <= {e8_od}'))
 ```
+
+## Sweet 16 History
+
 
 ```{r sweet16_gg, echo=FALSE}
 s16 <- ggplot(s16_teams, aes(x = adj_o_rk, y = adj_d_rk)) + 
@@ -468,6 +480,10 @@ s16_history %>%
   tab_header(title = 'Sweet 16 History',subtitle = glue('Offense + Defense <= {s16_od} & One Inside top-{s16_one} or both Outisde top-{s16_elite}'))
   #tab_header(title = 'Sweet 16 History',subtitle = glue('Offense + Defense >= {s16_od}'))
 ```
+
+
+## Sweet 16 Takeaways
+
 
 ```{r sweet16_possibles, echo=FALSE}
 s16_possibles <- ff %>%
