@@ -1,17 +1,9 @@
 ---
 title: "NCAA Tournament Historical Outcomes"
 author: "Matt O'Neil"
-date: "1/23/2022"
+date: "2/22/2022"
 output: html_document
 ---
-
-Next Steps
-
-* Create tables summarizing the results for each round
-  * How many of each end up inside the search results?
-  * What percentage of teams in a certain criteria make it to that level?
-  * What do the teams in a certain criteria look like that make it or lose earlier?
-  * Look at historical four factors of those teams
 
 ```{r setup, include=FALSE}
 library(tidyverse)
