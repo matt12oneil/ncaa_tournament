@@ -275,23 +275,33 @@ tourney_teams$team_finish <- factor(tourney_teams$team_finish,levels = c('R1','R
 
 s16_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2'))) %>%
-  dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+  dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed) 
+
+s16_teams$team <- gsub('+',' ', s16_teams$team, fixed = T)
 
 e8_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2','S16'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
+e8_teams$team <- gsub('+',' ', e8_teams$team, fixed = T)
+
 f4_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2','S16','E8'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+f4_teams$team <- gsub('+',' ', f4_teams$team, fixed = T)
 
 final_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2','S16','E8','F4'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
+final_teams$team <- gsub('+',' ', final_teams$team, fixed = T)
+
 champions <- tourney_teams %>%
   filter(team_finish == 'CH') %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
+
+champions$team <- gsub('+',' ', champions$team, fixed = T)
 
 ff <- kp_fourfactors(min_year = 2022, max_year = 2022) %>%
   clean_names()
@@ -343,9 +353,11 @@ ch_possible %>%
 
 ## Final History
 
-* Of teams that made the final, only four were outside the top 10 in both O-Rank and D-Rank
-  * Syracuse (Carmelo Anthony), Butler (Gordon Hayward), and UConn (Kemba Walker) all made a deep run on the backs of of their stars
-* All other teams made the top-10, proving that teams with elite tools can make up for a lack of another, but that one elite tool is crucial
+* Of teams that made the final, only four had Offensive + Defensive rank > 40
+  * Butler (Gordon Hayward) made a deep run on the backs of of their stars
+  * Kentucky was an underseeded young team that just took some time to get going
+  * That 2014 UConn team (that beat Kentucky) was an historic outlier, both as a champion and a finalist
+
 
 ```{r final_gg, echo=FALSE}
 final <- ggplot(final_teams, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + gghighlight(adj_o_rk + adj_d_rk > final_od) + labs(title = 'Final Teams by AdjO & AdjD Rank', subtitle = glue('Offense + Defense > {final_od}'))
@@ -378,10 +390,8 @@ final_possibles %>%
 
 ## Final 4 History
 
-* Only 8 Final Four teams were outside the top 15 in both O-Rank and D-Rank
-* There's probably more of a pattern that can be found here
-* This is a good start, but it's not too telling as far as saying who has a chance of making it
-
+* Only 8 Final Four teams had Offensive Rank + Defensive Rank > 65
+* Additionally, only one of the teams was lower than a 3 seed, proving that most of the teams that are outliers are way outside the expected seeding line to make a Final 4
 ```{r final4_gg, echo=FALSE}
 f4 <- ggplot(f4_teams, aes(x = adj_o_rk, y = adj_d_rk)) + 
   geom_point() + 
