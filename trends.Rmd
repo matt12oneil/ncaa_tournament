@@ -22,6 +22,8 @@ library(ggrepel)
 library(gtExtras)
 library(gt)
 library(gghighlight)
+library(RCurl)
+library(readr)
 ```
 
 ```{r constraints, include=FALSE}
@@ -269,7 +271,8 @@ tourney_teams <- all_hist %>%
 
 
 ```{r finish_levels, include=FALSE}
-tourney_teams <- readr::read_csv2(file = '/Users/mattoneil/Documents/MO/ncaa_tournament/tourney_teams.csv')
+
+tourney_teams <- read.csv("https://raw.githubusercontent.com/matt12oneil/ncaa_tournament/master/tourney_teams.csv", sep = ';')
 
 tourney_teams$team_finish <- factor(tourney_teams$team_finish,levels = c('R1','R2','S16','E8','F4','2nd','CH'))
 
