@@ -394,7 +394,7 @@ final_possibles %>%
 ## Final 4 History
 
 * Only 8 Final Four teams had Offensive Rank + Defensive Rank > 65
-* Additionally, only one of the teams was lower than a 3 seed, proving that most of the teams that are outliers are way outside the expected seeding line to make a Final 4
+* Additionally, only one of the teams was a 3 seed or better, proving that most of the teams that are outliers are way outside the expected seeding line to make a Final 4
 <br>
 ```{r final4_gg, echo=FALSE}
 f4 <- ggplot(f4_teams, aes(x = adj_o_rk, y = adj_d_rk)) + 
