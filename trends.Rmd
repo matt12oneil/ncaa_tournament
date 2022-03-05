@@ -6,6 +6,7 @@ output: slidy_presentation
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 library(tidyverse)
 library(hoopR)
 library(janitor)
@@ -24,6 +25,7 @@ library(gt)
 library(gghighlight)
 library(RCurl)
 library(readr)
+library(gridExtra)
 ```
 
 ```{r constraints, include=FALSE}
@@ -276,35 +278,32 @@ tourney_teams <- read.csv("https://raw.githubusercontent.com/matt12oneil/ncaa_to
 
 tourney_teams$team_finish <- factor(tourney_teams$team_finish,levels = c('R1','R2','S16','E8','F4','2nd','CH'))
 
+tourney_teams$team <- gsub('+',' ', tourney_teams$team, fixed = T)
+
 s16_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed) 
 
-s16_teams$team <- gsub('+',' ', s16_teams$team, fixed = T)
 
 e8_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2','S16'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
-e8_teams$team <- gsub('+',' ', e8_teams$team, fixed = T)
 
 f4_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2','S16','E8'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
-f4_teams$team <- gsub('+',' ', f4_teams$team, fixed = T)
 
 final_teams <- tourney_teams %>%
   filter(!(team_finish %in% c('R1','R2','S16','E8','F4'))) %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
-final_teams$team <- gsub('+',' ', final_teams$team, fixed = T)
 
 champions <- tourney_teams %>%
   filter(team_finish == 'CH') %>%
   dplyr::select(year, team, team_rk, ends_with('rk'), team_finish, ncaa_seed)
 
-champions$team <- gsub('+',' ', champions$team, fixed = T)
 
 ff <- kp_fourfactors(min_year = 2022, max_year = 2022) %>%
   clean_names()
@@ -558,17 +557,51 @@ bind_rows(s16_all) %>%
   fmt_percent(error_rate, decimals = 2)
 ```
 
-```{undefined eval=FALSE, include=FALSE}
-tourney_teams %>%
-  #filter(adj_o_rk <= 20 & adj_d_rk <= 20) %>%
-  filter((adj_o_rk <= 10 | adj_d_rk <= 10) & (adj_d_rk <= 100 & adj_o_rk <= 100)) %>%
-  #filter(adj_o_rk <= 5 | adj_d_rk <= 5) %>%
-  group_by(team_finish) %>%
-  summarize(total = n()) %>%
-  arrange(team_finish) %>%
-  gt()
+## 12+ Upsets
+```{r upsets, echo=FALSE, fig.height=4, fig.width=12}
+upsets <- tourney_teams %>%
+  filter(team_finish != 'R1' & (ncaa_seed >= 12)) %>%
+  dplyr::select(year, team, ncaa_seed, team_finish, ends_with('rk'))
+
+team <- ggplot(upsets, aes(x=team_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '12+ Upsets by Team Rank') + ylim(0,.02) + xlim(0,250)
+d <- ggplot(upsets, aes(x=adj_d_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '12+ Upsets by Adj D Rank') + ylim(0,.02) + xlim(0,250)
+o <- ggplot(upsets, aes(x=adj_o_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '12+ Upsets by Adj O Rank') + ylim(0,.02) + xlim(0,250)
+
+grid.arrange(team, o,d, nrow = 1)
+```
+
+## 10+ S16
+```{r s16_upsets, echo=FALSE, fig.height=4, fig.width=12}
+upsets <- tourney_teams %>%
+  filter(team_finish != 'R1' & team_finish != 'R2' & (ncaa_seed >= 10)) %>%
+  dplyr::select(year, team, ncaa_seed, team_finish, ends_with('rk'))
+
+team <- ggplot(upsets, aes(x=team_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '7+ S16 or Greater by Team Rank') + ylim(0,.03) + xlim(0,250)
+d <- ggplot(upsets, aes(x=adj_d_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '7+ S16 or Greater by Adj D Rank') + ylim(0,.03) + xlim(0,250)
+o <- ggplot(upsets, aes(x=adj_o_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '7+ S16 or Greater by Adj O Rank') + ylim(0,.03) + xlim(0,250)
+
+grid.arrange(team, o,d, nrow = 1)
 ```
 
 
 
+## Citations
+```{r citations, echo=FALSE}
+toBibtex(citation('rmarkdown'))
+toBibtex(citation('tidyverse'))
+toBibtex(citation('hoopR'))
+toBibtex(citation('rvest'))
+toBibtex(citation('stringi'))
+toBibtex(citation('furrr'))
+toBibtex(citation('ggplot2'))
+toBibtex(citation('glue'))
+toBibtex(citation('collapse'))
+toBibtex(citation('ggrepel'))
+toBibtex(citation('dplyr'))
+toBibtex(citation('gtExtras'))
+toBibtex(citation('gt'))
+toBibtex(citation('gghighlight'))
+toBibtex(citation('readr'))
+toBibtex(citation('gridExtra'))
+```
 
