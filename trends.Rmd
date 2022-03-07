@@ -570,19 +570,41 @@ o <- ggplot(upsets, aes(x=adj_o_rk)) + geom_histogram(bins = 15, aes(y =..densit
 grid.arrange(team, o,d, nrow = 1)
 ```
 
+## 12+ Upsets, Continued
+```{r upsets_2, echo=FALSE}
+upsets <- tourney_teams %>%
+  filter(team_finish != 'R1' & (ncaa_seed >= 12)) %>%
+  dplyr::select(year, team, ncaa_seed, team_finish, ends_with('rk'))
+
+
+ggplot(upsets, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + geom_smooth(se = FALSE)
+
+
+```
+
+
 ## 10+ S16
 ```{r s16_upsets, echo=FALSE, fig.height=4, fig.width=12}
 upsets <- tourney_teams %>%
   filter(team_finish != 'R1' & team_finish != 'R2' & (ncaa_seed >= 10)) %>%
   dplyr::select(year, team, ncaa_seed, team_finish, ends_with('rk'))
 
-team <- ggplot(upsets, aes(x=team_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '7+ S16 or Greater by Team Rank') + ylim(0,.03) + xlim(0,250)
-d <- ggplot(upsets, aes(x=adj_d_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '7+ S16 or Greater by Adj D Rank') + ylim(0,.03) + xlim(0,250)
-o <- ggplot(upsets, aes(x=adj_o_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '7+ S16 or Greater by Adj O Rank') + ylim(0,.03) + xlim(0,250)
+team <- ggplot(upsets, aes(x=team_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '10+ S16 or Greater by Team Rank') + ylim(0,.03) + xlim(0,250)
+d <- ggplot(upsets, aes(x=adj_d_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '10+ S16 or Greater by Adj D Rank') + ylim(0,.03) + xlim(0,250)
+o <- ggplot(upsets, aes(x=adj_o_rk)) + geom_histogram(bins = 15, aes(y =..density..)) + geom_density() + ggtitle(label = '10+ S16 or Greater by Adj O Rank') + ylim(0,.03) + xlim(0,250)
 
 grid.arrange(team, o,d, nrow = 1)
 ```
 
+## 10+ S16, Continued
+```{r s16_upsets_2, echo=FALSE}
+upsets <- tourney_teams %>%
+  filter(team_finish != 'R1' & team_finish != 'R2' & (ncaa_seed >= 10)) %>%
+  dplyr::select(year, team, ncaa_seed, team_finish, ends_with('rk'))
+
+ggplot(upsets, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + geom_smooth(se = FALSE)
+##eventually get the teams that fit the bill of having a good defense and are lower seeded
+```
 
 
 ## Citations
