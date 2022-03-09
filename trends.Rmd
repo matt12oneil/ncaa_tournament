@@ -6,6 +6,7 @@ output: slidy_presentation
 ---
 
 ```{r setup, include=FALSE}
+#historically, what have teams that fit each criteria done? i.e. how far does a team that fits the championship profile typically go? are they basically locks to make the S16? E8?
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 library(tidyverse)
 library(hoopR)
