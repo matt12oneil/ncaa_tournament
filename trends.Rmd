@@ -320,7 +320,25 @@ ranks <- kp_pomeroy_ratings(min_year = 2022, max_year = 2022) %>%
   mutate(kp_rank = min_rank(desc(adj_em))) 
 
 all <- ff %>%
-  inner_join(ranks, by = c('team','ncaa_seed','conf','adj_t','adj_t_rk','adj_o','adj_o_rk','adj_d_rk','adj_d','year'))
+  inner_join(ranks, by = c('team','ncaa_seed','conf','adj_t','adj_t_rk','adj_o','adj_o_rk','adj_d_rk','adj_d','year')) %>%
+  mutate(kp_seed = case_when(
+    kp_rank >= 1 & kp_rank <= 4 ~ 1,
+    kp_rank >= 5 & kp_rank <= 8 ~ 2,
+    kp_rank >= 9 & kp_rank <= 12 ~ 3,
+    kp_rank >= 13 & kp_rank <= 16 ~ 4,
+    kp_rank >= 17 & kp_rank <= 20 ~ 5,
+    kp_rank >= 21 & kp_rank <= 24 ~ 6,
+    kp_rank >= 25 & kp_rank <= 28 ~ 7,
+    kp_rank >= 29 & kp_rank <= 32 ~ 8,
+    kp_rank >= 33 & kp_rank <= 36 ~ 9,
+    kp_rank >= 37 & kp_rank <= 40 ~ 10,
+    kp_rank >= 41 & kp_rank <= 45 ~ 11,
+    kp_rank >= 46 & kp_rank <= 50 ~ 12,
+    kp_rank >= 51 & kp_rank <= 54 ~ 13,
+    kp_rank >= 55 & kp_rank <= 58 ~ 14,
+    kp_rank >= 59 & kp_rank <= 62 ~ 15,
+    kp_rank >= 63 & kp_rank <= 68 ~ 16,
+    TRUE ~ kp_rank))
 ```
 
 ## Champions
@@ -726,7 +744,7 @@ render_gt(matchup_side1(input$team1, input$team2))
 matchup_side2 <- function(team1,team2) {
   offense <- all %>%
     filter(team == team2) %>%
-    select(Team = team,seed = ncaa_seed, Rank = rk, adj_em,  adj_t, Tempo = adj_t_rk, eff = adj_o, Efficiency = adj_o_rk, efg = off_e_fg_pct, `eFG%` = off_e_fg_pct_rk, to = off_to_pct, `TO%` = off_to_pct_rk, or = off_or_pct, `OReb%` = off_or_pct_rk, ftr = off_ft_rate, FTRate = off_ft_rate_rk)
+    select(Team = team,seed = ncaa_seed, Rank = rk, adj_em, adj_t, Tempo = adj_t_rk, eff = adj_o, Efficiency = adj_o_rk, efg = off_e_fg_pct, `eFG%` = off_e_fg_pct_rk, to = off_to_pct, `TO%` = off_to_pct_rk, or = off_or_pct, `OReb%` = off_or_pct_rk, ftr = off_ft_rate, FTRate = off_ft_rate_rk)
 
   defense <- all %>%
     filter(team == team1) %>%
