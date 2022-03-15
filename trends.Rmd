@@ -312,6 +312,15 @@ ff <- kp_fourfactors(min_year = 2022, max_year = 2022) %>%
   clean_names() %>%
   filter(!is.na(ncaa_seed)) %>%
   arrange(team)
+
+ranks <- kp_pomeroy_ratings(min_year = 2022, max_year = 2022) %>%
+  clean_names() %>%
+  filter(!is.na(ncaa_seed)) %>%
+  arrange(desc(adj_em)) %>%
+  mutate(kp_rank = min_rank(desc(adj_em))) 
+
+all <- ff %>%
+  inner_join(ranks, by = c('team','ncaa_seed','conf','adj_t','adj_t_rk','adj_o','adj_o_rk','adj_d_rk','adj_d','year'))
 ```
 
 ## Champions
@@ -346,11 +355,11 @@ ch_history %>%
 
 <br>
 ```{r possible_champs, echo=FALSE}
-ch_possible <- ff %>%
+ch_possible <- all %>%
   #filter((adj_o_rk <= 20 & adj_d_rk <= 20) & (adj_o_rk <= 50 & adj_d_rk <= 50)) %>%
   filter(adj_o_rk <= ch_od & adj_d_rk <= ch_od) %>%
-  select(team,seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
-  arrange(team) 
+  select(team,seed = ncaa_seed, Rank = rk, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  arrange(seed) 
 
 ch_possible %>%
   gt() %>%
@@ -393,10 +402,10 @@ final_history %>%
 
 ## Final Takeaways
 ```{r final_possibles, echo=FALSE}
-final_possibles <- ff %>%
+final_possibles <- all %>%
   filter(adj_o_rk + adj_d_rk <= final_od) %>%
-  select(team,seed = ncaa_seed, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
-  arrange(team) 
+  select(team,seed = ncaa_seed, Rank = rk, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  arrange(seed) 
 
 final_possibles %>%
   gt() %>%
@@ -441,11 +450,11 @@ f4_history %>%
 
 ## Final 4 Takeaways
 ```{r final4_possibles, echo=FALSE}
-f4_possibles <- ff %>%
+f4_possibles <- all %>%
   #filter((adj_o_rk <= f4_od | adj_d_rk <= f4_od)) %>%
   filter(adj_o_rk + adj_d_rk <= f4_od) %>%
-  select(team,seed = ncaa_seed,  Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
-  arrange(team) 
+  select(team,seed = ncaa_seed, Rank = rk, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  arrange(seed) 
 
 f4_possibles %>%
   gt() %>%
@@ -487,11 +496,11 @@ e8_history %>%
 ## Elite 8 Takeaways
 
 ```{r elite8_possibles, echo=FALSE}
-e8_possibles <- ff %>%
+e8_possibles <- all %>%
   #filter((adj_o_rk + adj_d_rk <= 80) & (adj_o_rk <= 25 | adj_d_rk <= 25)) %>%
   filter(adj_o_rk + adj_d_rk <= e8_od) %>%
-  select(team,seed = ncaa_seed,  Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>% 
-  arrange(team) 
+  select(team,seed = ncaa_seed, Rank = rk, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>% 
+  arrange(seed) 
 
 e8_possibles %>%
   gt() %>%
@@ -538,11 +547,11 @@ s16_history %>%
 
 
 ```{r sweet16_possibles, echo=FALSE}
-s16_possibles <- ff %>%
+s16_possibles <- all %>%
   filter(((adj_o_rk + adj_d_rk <= s16_od) & (adj_o_rk <= s16_one | adj_d_rk <= s16_one)) | (adj_o_rk <= s16_elite | adj_d_rk <= s16_elite))  %>%
   #filter(adj_o_rk + adj_d_rk <= s16_od) %>%
-  select(team,seed = ncaa_seed,  Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
-  arrange(team) %>%
+  select(team,seed = ncaa_seed, Rank = rk, Tempo = adj_t_rk, O = adj_o_rk, D = adj_d_rk, O_EFG = off_e_fg_pct_rk, O_TO = off_to_pct_rk, O_OR = off_or_pct_rk, O_FTR = off_ft_rate_rk, D_EFG = def_e_fg_pct_rk, D_TO = def_to_pct_rk, D_OR = def_or_pct_rk, D_FTR = def_ft_rate_rk) %>%
+  arrange(seed) %>%
   as.data.frame() 
 
 s16_possibles %>%
@@ -657,43 +666,46 @@ ggplot(upsets, aes(x = adj_o_rk, y = adj_d_rk)) + geom_point() + geom_smooth(se 
 ## Matchup Dependencies
 ```{r matchups_inputs, echo=FALSE}
 selectInput('team1',
-            choices = ff$team,
+            choices = all$team,
             label = 'Select Team 1')
 
 selectInput('team2',
-            choices = ff$team,
+            choices = all$team,
             label = 'Select Team 2')
 
 matchup_side1 <- function(team1,team2) {
-  offense <- ff %>%
+  offense <- all %>%
     filter(team == team1) %>%
-    select(Team = team, Tempo = adj_t, adj_t_rk, Efficiency = adj_o, eff_rk = adj_o_rk, `eFG%` = off_e_fg_pct, efg_rk = off_e_fg_pct_rk, `TO%` = off_to_pct, to_rk = off_to_pct_rk, `OReb%` = off_or_pct, oreb_rk = off_or_pct_rk, `FTRate` = off_ft_rate, ftr_rk = off_ft_rate_rk)
+    select(Team = team,seed = ncaa_seed, Rank = rk, adj_em,  adj_t, Tempo = adj_t_rk, eff = adj_o, Efficiency = adj_o_rk, efg = off_e_fg_pct, `eFG%` = off_e_fg_pct_rk, to = off_to_pct, `TO%` = off_to_pct_rk, or = off_or_pct, `OReb%` = off_or_pct_rk, ftr = off_ft_rate, FTRate = off_ft_rate_rk)
 
-  defense <- ff %>%
+  defense <- all %>%
     filter(team == team2) %>%
-    select(Team = team, Tempo = adj_t, adj_t_rk, Efficiency = adj_d, eff_rk = adj_d_rk, `eFG%` = def_e_fg_pct, efg_rk = def_e_fg_pct_rk, `TO%` = def_to_pct, to_rk = def_to_pct_rk, `OReb%` = def_or_pct, oreb_rk = def_or_pct_rk, `FTRate` = def_ft_rate, ftr_rk = def_ft_rate_rk)
+    select(Team = team,seed = ncaa_seed,Rank = rk, adj_em,  adj_t, Tempo = adj_t_rk, eff = adj_d, Efficiency = adj_d_rk, efg = def_e_fg_pct, `eFG%` = def_e_fg_pct_rk, to = def_to_pct, `TO%` = def_to_pct_rk, or = def_or_pct, `OReb%` = def_or_pct_rk, ftr = def_ft_rate, FTRate = def_ft_rate_rk)
 
 offense %>%
   rbind(defense) %>%
   gt() %>%
-  gt_merge_stack(col1 = Tempo, col2 = adj_t_rk) %>%
-  gt_merge_stack(col1 = Efficiency, col2 = eff_rk) %>%
-  gt_merge_stack(col1 = `eFG%`, col2 = efg_rk) %>%
-  gt_merge_stack(col1 = `TO%`, col2 = to_rk) %>%
-  gt_merge_stack(col1 = `OReb%`, col2 = oreb_rk) %>%
-  gt_merge_stack(col1 = `FTRate`, col2 = ftr_rk) %>%
+  gt_merge_stack(col1 = Rank, col2 = adj_em) %>%
+  gt_merge_stack(col1 = Tempo, col2 = adj_t) %>%
+  gt_merge_stack(col1 = Efficiency, col2 = eff) %>%
+  gt_merge_stack(col1 = `eFG%`, col2 = efg) %>%
+  gt_merge_stack(col1 = `TO%`, col2 = to) %>%
+  gt_merge_stack(col1 = `OReb%`, col2 = or) %>%
+  gt_merge_stack(col1 = `FTRate`, col2 = ftr) %>%
   tab_options(
-    row.striping.include_table_body = TRUE,
-    heading.background.color = "slategray1",
+    heading.background.color = "lightgray",
     column_labels.background.color = "lightslategray",
-    stub.background.color = "seashell1",
-    row.striping.background_color = "aliceblue",
-    table.background.color = "seashell1",
-    source_notes.background.color = "lightgray"
+    source_notes.background.color = "lightgray",
   ) %>%
+   data_color(
+    columns = Rank:FTRate,
+    colors = scales::col_numeric(
+      colorspace::sequential_hcl(n = 2, palette = 'Greens 2'), 
+      domain = NULL
+  )) %>%
   tab_header(
     title = glue('2021-2022 {team1} Offense vs. {team2} Defense'),
-    subtitle = 'Small Numbers are National Rank | FF Data pulled from KenPom via hoopR')  %>% 
+    subtitle = 'Big Numbers are National Rank | FF Data pulled from KenPom via hoopR')  %>% 
   cols_align(
     align = "center",
     columns = everything()
@@ -712,35 +724,38 @@ render_gt(matchup_side1(input$team1, input$team2))
 ```{r matchups_inputs_2, echo=FALSE}
 
 matchup_side2 <- function(team1,team2) {
-  offense <- ff %>%
+  offense <- all %>%
     filter(team == team2) %>%
-    select(Team = team, Tempo = adj_t, adj_t_rk, Efficiency = adj_o, eff_rk = adj_o_rk, `eFG%` = off_e_fg_pct, efg_rk = off_e_fg_pct_rk, `TO%` = off_to_pct, to_rk = off_to_pct_rk, `OReb%` = off_or_pct, oreb_rk = off_or_pct_rk, `FTRate` = off_ft_rate, ftr_rk = off_ft_rate_rk)
+    select(Team = team,seed = ncaa_seed, Rank = rk, adj_em,  adj_t, Tempo = adj_t_rk, eff = adj_o, Efficiency = adj_o_rk, efg = off_e_fg_pct, `eFG%` = off_e_fg_pct_rk, to = off_to_pct, `TO%` = off_to_pct_rk, or = off_or_pct, `OReb%` = off_or_pct_rk, ftr = off_ft_rate, FTRate = off_ft_rate_rk)
 
-  defense <- ff %>%
+  defense <- all %>%
     filter(team == team1) %>%
-    select(Team = team, Tempo = adj_t, adj_t_rk, Efficiency = adj_d, eff_rk = adj_d_rk, `eFG%` = def_e_fg_pct, efg_rk = def_e_fg_pct_rk, `TO%` = def_to_pct, to_rk = def_to_pct_rk, `OReb%` = def_or_pct, oreb_rk = def_or_pct_rk, `FTRate` = def_ft_rate, ftr_rk = def_ft_rate_rk)
+    select(Team = team,seed = ncaa_seed, Rank = rk, adj_em,  adj_t, Tempo = adj_t_rk, eff = adj_d, Efficiency = adj_d_rk, efg = def_e_fg_pct, `eFG%` = def_e_fg_pct_rk, to = def_to_pct, `TO%` = def_to_pct_rk, or = def_or_pct, `OReb%` = def_or_pct_rk, ftr = def_ft_rate, FTRate = def_ft_rate_rk)
 
 offense %>%
   rbind(defense) %>%
   gt() %>%
-  gt_merge_stack(col1 = Tempo, col2 = adj_t_rk) %>%
-  gt_merge_stack(col1 = Efficiency, col2 = eff_rk) %>%
-  gt_merge_stack(col1 = `eFG%`, col2 = efg_rk) %>%
-  gt_merge_stack(col1 = `TO%`, col2 = to_rk) %>%
-  gt_merge_stack(col1 = `OReb%`, col2 = oreb_rk) %>%
-  gt_merge_stack(col1 = `FTRate`, col2 = ftr_rk) %>%
+  gt_merge_stack(col1 = Rank, col2 = adj_em) %>%
+  gt_merge_stack(col1 = Tempo, col2 = adj_t) %>%
+  gt_merge_stack(col1 = Efficiency, col2 = eff) %>%
+  gt_merge_stack(col1 = `eFG%`, col2 = efg) %>%
+  gt_merge_stack(col1 = `TO%`, col2 = to) %>%
+  gt_merge_stack(col1 = `OReb%`, col2 = or) %>%
+  gt_merge_stack(col1 = `FTRate`, col2 = ftr) %>%
   tab_options(
-    row.striping.include_table_body = TRUE,
-    heading.background.color = "slategray1",
+    heading.background.color = "lightgray",
     column_labels.background.color = "lightslategray",
-    stub.background.color = "seashell1",
-    row.striping.background_color = "aliceblue",
-    table.background.color = "seashell1",
-    source_notes.background.color = "lightgray"
+    source_notes.background.color = "lightgray",
   ) %>%
+   data_color(
+    columns = Rank:FTRate,
+    colors = scales::col_numeric(
+      colorspace::sequential_hcl(n = 2, palette = 'Greens 2'), 
+      domain = NULL
+  )) %>%
   tab_header(
     title = glue('2021-2022 {team2} Offense vs. {team1} Defense'),
-    subtitle = 'Small Numbers are National Rank | FF Data pulled from KenPom via hoopR')  %>% 
+    subtitle = 'Big Numbers are National Rank | FF Data pulled from KenPom via hoopR')  %>% 
   cols_align(
     align = "center",
     columns = everything()
